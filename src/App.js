@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
-import { ethers } from "ethers";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
-import { InjectedConnector } from "wagmi/connectors/injected";
+import React, { useEffect, useState } from 'react';
+import { ethers } from 'ethers';
+import { useAccount, useConnect, useDisconnect } from 'wagmi';
+import { InjectedConnector } from 'wagmi/connectors/injected';
+import { CoinbaseWalletConnector } from 'wagmi/connectors/coinbaseWallet';
 
-// Replace with your token contract address and ABI
 const TOKEN_CONTRACT_ADDRESS = "0xA2e8975EF5344e1cE15732E660ce6bBDE7CFCe0A";
 const TOKEN_ABI = [
 	{
@@ -190,29 +190,55 @@ const TOKEN_ABI = [
 		"type": "function"
 	}
 ];
-  
+
 function App() {
   const { address, isConnected } = useAccount();
-  const { connect } = useConnect({
-    connector: new InjectedConnector(),
+  const { connect, connectors } = useConnect({
+    connectors: [
+      new InjectedConnector(), // For Trust Wallet/MetaMask
+      new CoinbaseWalletConnector({
+        options: {
+          appName: 'USDT dApp',
+          jsonRpcUrl: 'https://mainnet.infura.io/v3/YOUR_INFURA_KEY'
+        }
+      })
+    ]
   });
   const { disconnect } = useDisconnect();
 
   const [balance, setBalance] = useState("0");
+  const [price, setPrice] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Check if user is on mobile
+    setIsMobile(/Android|iPhone|iPad/i.test(navigator.userAgent));
+    
     if (isConnected && address) {
       fetchTokenData(address);
+      fetchPrice();
     }
   }, [isConnected, address]);
 
   const fetchTokenData = async (userAddress) => {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const tokenContract = new ethers.Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_ABI, provider);
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const tokenContract = new ethers.Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_ABI, provider);
+      const balance = await tokenContract.balanceOf(userAddress);
+      setBalance(ethers.formatUnits(balance, 6));
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+    }
+  };
 
-    // Fetch token balance
-    const balance = await tokenContract.balanceOf(userAddress);
-    setBalance(ethers.utils.formatUnits(balance, 6)); // Adjust decimals (6 for USDT)
+  const fetchPrice = async () => {
+    try {
+      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=usd');
+      const data = await response.json();
+      setPrice(data.tether.usd);
+    } catch (error) {
+      console.error("Error fetching price:", error);
+    }
   };
 
   const addTokenToWallet = async () => {
@@ -223,38 +249,101 @@ function App() {
           type: "ERC20",
           options: {
             address: TOKEN_CONTRACT_ADDRESS,
-            symbol: "USDT", // Replace with your token symbol
-            decimals: 6, // Replace with your token decimals
-            image: "https://s2.coinmarketcap.com/static/img/coins/64x64/825.png", // Optional: Add a URL to your token logo
+            symbol: "USDT",
+            decimals: 6,
+            image: "https://s2.coinmarketcap.com/static/img/coins/64x64/825.png", // USDT logo
           },
         },
       });
-      alert("Token added to wallet successfully!");
     } catch (error) {
-      console.error("Error adding token to wallet:", error);
+      console.error("Error adding token:", error);
+    }
+  };
+
+  const handleCoinbaseWallet = () => {
+    if (isMobile) {
+      window.location.href = `https://go.cb-w.com/dapp?url=${encodeURIComponent(window.location.href)}`;
+    } else {
+      connect({ connector: connectors[1] });
     }
   };
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
-      <h1>My Token dApp</h1>
-      {isConnected ? (
+    <div style={{ 
+      padding: "20px", 
+      fontFamily: "Arial, sans-serif",
+      maxWidth: "500px",
+      margin: "0 auto",
+      textAlign: "center"
+    }}>
+      <h1>USDT dApp</h1>
+      
+      {!isConnected ? (
         <div>
-          <p>Connected Wallet: {address}</p>
-          <p>Token Balance: {balance} USDT</p>
-          <button onClick={addTokenToWallet} style={{ marginTop: "10px", padding: "10px" }}>
-            Add USDT to Wallet
-          </button>
-          <button onClick={disconnect} style={{ marginTop: "10px", padding: "10px", marginLeft: "10px" }}>
-            Disconnect
-          </button>
+          <p>Connect your wallet to view USDT details</p>
+          <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+            <button 
+              onClick={() => connect({ connector: connectors[0] })}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#2775ca",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer"
+              }}
+            >
+              Trust Wallet
+            </button>
+            <button 
+              onClick={handleCoinbaseWallet}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#1652F0",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer"
+              }}
+            >
+              Coinbase Wallet
+            </button>
+          </div>
         </div>
       ) : (
         <div>
-          <p>Connect your wallet to view token details</p>
-          <button onClick={() => connect()} style={{ padding: "10px" }}>
-            Connect Wallet
-          </button>
+          <p>Connected: {address.slice(0, 6)}...{address.slice(-4)}</p>
+          <p>USDT Balance: {balance}</p>
+          {price && <p>Current Price: ${price} USD</p>}
+          
+          <div style={{ display: "flex", gap: "10px", justifyContent: "center", marginTop: "20px" }}>
+            <button 
+              onClick={addTokenToWallet}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#28a745",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer"
+              }}
+            >
+              Add USDT to Wallet
+            </button>
+            <button 
+              onClick={disconnect}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#dc3545",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer"
+              }}
+            >
+              Disconnect
+            </button>
+          </div>
         </div>
       )}
     </div>
