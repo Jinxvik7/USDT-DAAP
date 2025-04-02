@@ -7,7 +7,6 @@ import { InjectedConnector } from 'wagmi/connectors/injected';
 import { CoinbaseWalletConnector } from 'wagmi/connectors/coinbaseWallet';
 import App from './App';
 
-// Create wagmi client for v0.12.9
 const client = createClient({
   autoConnect: true,
   connectors: [
@@ -16,6 +15,7 @@ const client = createClient({
       chains: [mainnet],
       options: {
         appName: 'USDT dApp',
+        headlessMode: true
       }
     })
   ],
