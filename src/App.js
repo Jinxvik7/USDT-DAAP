@@ -193,16 +193,8 @@ const TOKEN_ABI = [
 
 function App() {
   const { address, isConnected } = useAccount();
-  const { connect, connectors } = useConnect({
-    connectors: [
-      new InjectedConnector(), // For Trust Wallet/MetaMask
-      new CoinbaseWalletConnector({
-        options: {
-          appName: 'USDT dApp',
-          jsonRpcUrl: 'https://mainnet.infura.io/v3/YOUR_INFURA_KEY'
-        }
-      })
-    ]
+  const { connect } = useConnect({
+    connector: new InjectedConnector()
   });
   const { disconnect } = useDisconnect();
 
@@ -211,7 +203,6 @@ function App() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Check if user is on mobile
     setIsMobile(/Android|iPhone|iPad/i.test(navigator.userAgent));
     
     if (isConnected && address) {
@@ -225,7 +216,7 @@ function App() {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const tokenContract = new ethers.Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_ABI, provider);
       const balance = await tokenContract.balanceOf(userAddress);
-      setBalance(ethers.formatUnits(balance, 6));
+      setBalance(ethers.utils.formatUnits(balance, 6)); // Changed from formatUnits to utils.formatUnits
     } catch (error) {
       console.error("Error fetching balance:", error);
     }
@@ -251,7 +242,7 @@ function App() {
             address: TOKEN_CONTRACT_ADDRESS,
             symbol: "USDT",
             decimals: 6,
-            image: "https://s2.coinmarketcap.com/static/img/coins/64x64/825.png", // USDT logo
+            image: "https://s2.coinmarketcap.com/static/img/coins/64x64/825.png",
           },
         },
       });
@@ -260,11 +251,16 @@ function App() {
     }
   };
 
-  const handleCoinbaseWallet = () => {
+  const handleConnect = () => {
     if (isMobile) {
-      window.location.href = `https://go.cb-w.com/dapp?url=${encodeURIComponent(window.location.href)}`;
+      // Mobile-specific connection logic
+      if (window.ethereum) {
+        connect();
+      } else {
+        window.location.href = `https://go.cb-w.com/dapp?url=${encodeURIComponent(window.location.href)}`;
+      }
     } else {
-      connect({ connector: connectors[1] });
+      connect();
     }
   };
 
@@ -283,7 +279,7 @@ function App() {
           <p>Connect your wallet to view USDT details</p>
           <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
             <button 
-              onClick={() => connect({ connector: connectors[0] })}
+              onClick={handleConnect}
               style={{
                 padding: "10px 20px",
                 backgroundColor: "#2775ca",
@@ -293,20 +289,7 @@ function App() {
                 cursor: "pointer"
               }}
             >
-              Trust Wallet
-            </button>
-            <button 
-              onClick={handleCoinbaseWallet}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: "#1652F0",
-                color: "white",
-                border: "none",
-                borderRadius: "5px",
-                cursor: "pointer"
-              }}
-            >
-              Coinbase Wallet
+              Connect Wallet
             </button>
           </div>
         </div>
