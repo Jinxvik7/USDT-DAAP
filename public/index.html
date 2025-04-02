@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="My Token dApp" />
+    <title>My Token dApp</title>
+    <!-- Load React and ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Load Babel for JSX compilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    
+    <!-- Load your React app -->
+    <script type="text/babel" data-presets="react,env">
+      // This will be replaced by your compiled React code
+      // For now, just show a loading message
+      ReactDOM.render(
+        <h1>Loading dApp...</h1>,
+        document.getElementById('root')
+      );
+    </script>
+    
+    <!-- Fallback for non-JS users -->
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+  </body>
+</html>
