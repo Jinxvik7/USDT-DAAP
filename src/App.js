@@ -222,7 +222,7 @@ function App() {
 
   const fetchTokenData = async (userAddress) => {
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
       const tokenContract = new ethers.Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_ABI, provider);
       const balance = await tokenContract.balanceOf(userAddress);
       setBalance(ethers.formatUnits(balance, 6));
