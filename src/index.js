@@ -1,12 +1,11 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 import { WagmiConfig, createConfig, configureChains, mainnet } from 'wagmi';
 import { publicProvider } from 'wagmi/providers/public';
 import App from './App';
 
-// Remove unused 'chains' assignment
 const { publicClient, webSocketPublicClient } = configureChains(
-  [mainnet], // Chains are defined here but not assigned to a variable
+  [mainnet],
   [publicProvider()]
 );
 
@@ -16,11 +15,11 @@ const config = createConfig({
   webSocketPublicClient,
 });
 
-ReactDOM.render(
-  <React.StrictMode>
+const root = createRoot(document.getElementById('root'));
+root.render(
+  <StrictMode>
     <WagmiConfig config={config}>
       <App />
     </WagmiConfig>
-  </React.StrictMode>,
-  document.getElementById('root')
+  </StrictMode>
 );
