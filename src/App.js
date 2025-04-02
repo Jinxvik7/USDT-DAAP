@@ -189,12 +189,20 @@ const TOKEN_ABI = [
 		"stateMutability": "nonpayable",
 		"type": "function"
 	}
+  
 ];
 
 function App() {
   const { address, isConnected } = useAccount();
   const { connect } = useConnect({
-    connector: new InjectedConnector()
+    connectors: [
+      new InjectedConnector(),
+      new CoinbaseWalletConnector({
+        options: {
+          appName: 'USDT dApp'
+        }
+      })
+    ]
   });
   const { disconnect } = useDisconnect();
 
@@ -216,7 +224,7 @@ function App() {
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const tokenContract = new ethers.Contract(TOKEN_CONTRACT_ADDRESS, TOKEN_ABI, provider);
       const balance = await tokenContract.balanceOf(userAddress);
-      setBalance(ethers.utils.formatUnits(balance, 6)); // Changed from formatUnits to utils.formatUnits
+      setBalance(ethers.utils.formatUnits(balance, 6));
     } catch (error) {
       console.error("Error fetching balance:", error);
     }
@@ -253,7 +261,6 @@ function App() {
 
   const handleConnect = () => {
     if (isMobile) {
-      // Mobile-specific connection logic
       if (window.ethereum) {
         connect();
       } else {
