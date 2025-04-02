@@ -10,6 +10,7 @@
     "ethers": "5.7.2",
     "wagmi": "0.12.9",
     "viem": "0.3.47",
+    "@wagmi/core": "0.12.9",
     "ajv": "8.12.0"
   },
   "scripts": {
@@ -17,7 +18,7 @@
     "build": "CI=false NODE_OPTIONS=--openssl-legacy-provider react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "clean-install": "rm -rf node_modules && npm cache clean --force && npm install"
+    "clean": "rm -rf node_modules package-lock.json"
   },
   "browserslist": {
     "production": [">0.2%", "not dead", "not op_mini all"],
